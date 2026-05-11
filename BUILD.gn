@@ -734,6 +734,13 @@ if (defined(ohos_lite)) {
       "-Wno-unused-but-set-variable",
     ]
 
+    if (!support_jsapi) {
+      cflags_c += [
+        "-Wno-unused-function",
+        "-Wno-misleading-indentation",
+      ]
+    }
+
     ldflags = [
       "-pie",
       "-Wl,-z,relro",
