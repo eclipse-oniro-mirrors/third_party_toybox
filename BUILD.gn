@@ -241,6 +241,12 @@ if (defined(ohos_lite)) {
       "-fno-asynchronous-unwind-tables",
       "-fPIE",
       "-funsigned-char",
+      "-Wno-string-plus-int",
+      "-Wno-tautological-constant-compare",
+      "-Wno-string-conversion",
+      "-Wno-unused-but-set-variable",
+      "-Wno-unused-function",
+      "-Wno-misleading-indentation",
     ]
 
     ldflags = [
