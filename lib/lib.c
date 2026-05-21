@@ -1565,6 +1565,7 @@ int smemcmp(char *one, char *two, unsigned long len)
   return ii;
 }
 
+// patch.c used
 // Slow, but small.
 char *get_line(int fd)
 {

@@ -13,7 +13,7 @@
 // -s > 4064 = sizeof(toybuf)-sizeof(struct icmphdr)-CMSG_SPACE(sizeof(uint8_t)), then kernel adds 20 bytes
 USE_PING(NEWTOY(ping, "<1>1m#t#<0>255=64c#<0=3s#<0>4064=56i%W#<0=3w#<0qf46I:[-46]", TOYFLAG_USR|TOYFLAG_BIN|TOYFLAG_LINEBUF))
 USE_PING(OLDTOY(ping6, ping, TOYFLAG_USR|TOYFLAG_BIN|TOYFLAG_LINEBUF))
- 
+
 config PING
   bool "ping"
   default y
@@ -40,7 +40,7 @@ config PING
     -w SEC		Exit after this many seconds
 */
 
-#define FOR_ping 
+#define FOR_ping
 #include "toys.h"
 
 #include <ifaddrs.h>
@@ -215,7 +215,7 @@ void ping_main(void)
 
   memset(&msg, 0, sizeof(msg));
   // left enought space to store ttl value
-  
+
 #ifdef TOYBOX_OH_ADAPT
   /* fix "ping -s 65500" fail problem*/
   char *mybuff = malloc(65536);
@@ -338,9 +338,7 @@ void ping_main(void)
     toys.exitval = 0;
   }
 
-  sigatexit(0);
-  summary(0);
-
+  // summary(0) gets called for us atexit.
   if (CFG_TOYBOX_FREE) {
     freeaddrinfo(ai2);
     if (ifa2) freeifaddrs(ifa2);

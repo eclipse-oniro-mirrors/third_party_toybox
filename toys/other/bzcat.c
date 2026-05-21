@@ -723,7 +723,7 @@ static void do_bunzip2(int fd, char *name)
       free(tmp);
       tmp = 0;
 #endif
-    } else {
+    } else if (!err) {
       if (dotbz) *dotbz = '.';
 // unlink success return 0, fail return -1
 #ifdef TOYBOX_OH_ADAPT

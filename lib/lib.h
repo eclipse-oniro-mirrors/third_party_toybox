@@ -121,7 +121,10 @@ void xputsl(char *s, int len);
 void xputsn(char *s);
 void xputs(char *s);
 void xputc(char c);
+#ifdef TOYBOX_OH_ADAPT
+// watch.c used. fix exit with abnormal char ''
 void xflush(int flush);
+#endif
 void xvdaemon(void);
 void xexec(char **argv);
 pid_t xpopen_setup(char **argv, int *pipes, void (*callback)(char **argv));
@@ -442,4 +445,5 @@ pid_t __attribute__((returns_twice)) xvforkwrap(pid_t pid);
 #define minof(a, b) ({typeof(a) aa = (a); typeof(b) bb = (b); aa<bb ? aa : bb;})
 #define maxof(a, b) ({typeof(a) aa = (a); typeof(b) bb = (b); aa>bb ? aa : bb;})
 
+// patch.c used
 char *get_line(int fd);

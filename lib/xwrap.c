@@ -147,12 +147,15 @@ void xferror(FILE *fp)
   if (ferror(fp)) perror_exit(fp==stdout ? "stdout" : "write");
 }
 
+#ifdef TOYBOX_OH_ADAPT
+// watch.c used. fix exit with abnormal char ''
 // if !flush just check for error on stdout without flushing 
 void xflush(int flush)
 {
   if ((flush && fflush(0)) || ferror(stdout))
     if (!toys.exitval) perror_msg("write");
 }
+#endif
 
 void xprintf(char *format, ...)
 {
@@ -729,7 +732,11 @@ struct group *xgetgrgid(gid_t gid)
 {
   struct group *group = getgrgid(gid);
 
+#ifdef TOYBOX_OH_ADAPT
   if (!group) perror_exit("bad gid %ld", (long)gid);
+#else
+  if (!group) perror_exit("gid %ld", (long)gid);
+#endif
   return group;
 }
 
@@ -765,7 +772,11 @@ struct passwd *xgetpwnam(char *name)
 {
   struct passwd *up = getpwnam(name);
 
+#ifdef TOYBOX_OH_ADAPT
   if (!up) perror_exit("bad user '%s'", name);
+#else
+  if (!up) perror_exit("user '%s'", name);
+#endif
   return up;
 }
 
@@ -773,7 +784,11 @@ struct group *xgetgrnam(char *name)
 {
   struct group *gr = getgrnam(name);
 
+#ifdef TOYBOX_OH_ADAPT
   if (!gr) perror_exit("bad group '%s'", name);
+#else
+  if (!gr) perror_exit("group '%s'", name);
+#endif
   return gr;
 }
 

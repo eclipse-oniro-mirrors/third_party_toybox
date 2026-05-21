@@ -57,7 +57,7 @@ static int prompt(FILE *cin, const char* fmt, ...)
   // Clean up styles after Ctrl+C and other operations.
   printf("\33[0m");
 #endif
-  
+
   while (1) {
     fflush(NULL);
     input_key = tolower(getc(cin));
