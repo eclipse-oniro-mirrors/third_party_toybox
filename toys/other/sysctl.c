@@ -4,18 +4,18 @@
  * Copyright 2014 Kyungwan Han <asura321@gmail.com>
  *
  * No Standard
-
+ 
 USE_SYSCTL(NEWTOY(sysctl, "^neNqwpaA[!ap][!aq][!aw][+aA]", TOYFLAG_SBIN))
 
 config SYSCTL
   bool "sysctl"
   default y
   help
-    usage: sysctl [-aeNnqw] [-p [FILE] | KEY[=VALUE]...]
+    usage: sysctl [-aAeNnqw] [-p [FILE] | KEY[=VALUE]...]
 
     Read/write system control data (under /proc/sys).
 
-    -a	Show all values
+    -a,A	Show all values
     -e	Don't warn about unknown keys
     -N	Don't print key values
     -n	Don't print key names
@@ -43,8 +43,9 @@ static void replace_char(char *str, char old, char new)
 
 static void key_error(char *key)
 {
-  if (errno != ENOENT) perror_msg("key '%s'", key);
-  else if (!FLAG(e)) error_msg("unknown key '%s'", key);
+  if (errno == ENOENT) {
+    if (!(toys.optflags & FLAG_e)) error_msg("unknown key '%s'", key);
+  } else perror_msg("key '%s'", key);
 }
 
 static int write_key(char *path, char *key, char *value)
@@ -76,11 +77,11 @@ static int do_show_keys(struct dirtree *dt)
   if (!data) key_error(key);
   else {
     // Print the parts that aren't switched off by flags.
-    if (!FLAG(n)) xprintf("%s", key);
-    if (!FLAG(N) && !FLAG(n)) xprintf(" = ");
+    if (!(toys.optflags & FLAG_n)) xprintf("%s", key);
+    if (!(toys.optflags & (FLAG_N|FLAG_n))) xprintf(" = ");
     for (key = data+strlen(data); key > data && isspace(*--key); *key = 0);
-    if (!FLAG(N)) xprintf("%s", data);
-    if (!FLAG(N) || !FLAG(n)) xputc('\n');
+    if (!(toys.optflags & FLAG_N)) xprintf("%s", data);
+    if ((toys.optflags & (FLAG_N|FLAG_n)) != (FLAG_N|FLAG_n)) xputc('\n');
   }
 
   free(data);
@@ -95,11 +96,16 @@ static void process_key(char *key, char *value)
   char *path;
 
   if (!value) value = split_key(key);
-  if (FLAG(w) && !value) return error_msg("'%s' not key=value", key);
+  if ((toys.optflags & FLAG_w) && !value) {
+    error_msg("'%s' not key=value", key);
+
+    return;
+  }
+
   path = xmprintf("/proc/sys/%s", key);
   replace_char(path, '.', '/');
   // Note: failure to assign to a non-leaf node suppresses the display.
-  if (!(value && (!write_key(path, key, value) || FLAG(q)))) {
+  if (!(value && (!write_key(path, key, value) || (toys.optflags & FLAG_q)))) {
     if (!access(path, R_OK)) dirtree_read(path, do_show_keys);
     else key_error(key);
   }
@@ -111,10 +117,10 @@ void sysctl_main()
   char **args = 0;
 
   // Display all keys
-  if (FLAG(a)) dirtree_read("/proc/sys", do_show_keys);
+  if (toys.optflags & FLAG_a) dirtree_read("/proc/sys", do_show_keys);
 
   // read file
-  else if (FLAG(p)) {
+  else if (toys.optflags & FLAG_p) {
     FILE *fp = xfopen(*toys.optargs ? *toys.optargs : "/etc/sysctl.conf", "r");
     size_t len;
 

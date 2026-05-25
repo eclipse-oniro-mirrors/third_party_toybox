@@ -4,13 +4,13 @@
  *
  * No standard
 
-USE_TIMEOUT(NEWTOY(timeout, "<2^(foreground)(preserve-status)vk:s(signal):i", TOYFLAG_USR|TOYFLAG_BIN|TOYFLAG_ARGFAIL(125)))
+USE_TIMEOUT(NEWTOY(timeout, "<2^(foreground)(preserve-status)vk:s(signal):", TOYFLAG_USR|TOYFLAG_BIN|TOYFLAG_ARGFAIL(125)))
 
 config TIMEOUT
   bool "timeout"
   default y
   help
-    usage: timeout [-iv] [-k DURATION] [-s SIGNAL] DURATION COMMAND...
+    usage: timeout [-k DURATION] [-s SIGNAL] DURATION COMMAND...
 
     Run command line as a child process, sending child a signal if the
     command doesn't exit soon enough.
@@ -18,9 +18,8 @@ config TIMEOUT
     DURATION can be a decimal fraction. An optional suffix can be "m"
     (minutes), "h" (hours), "d" (days), or "s" (seconds, the default).
 
-    -i	Only kill for inactivity (restart timeout when command produces output)
-    -k	Send KILL signal if child still running this long after first signal
     -s	Send specified signal (default TERM)
+    -k	Send KILL signal if child still running this long after first signal
     -v	Verbose
     --foreground       Don't create new process group
     --preserve-status  Exit with the child's exit status
@@ -32,76 +31,60 @@ config TIMEOUT
 GLOBALS(
   char *s, *k;
 
-  struct pollfd pfd;
-  sigjmp_buf sj;
-  int fds[2], pid, rc;
+  int nextsig;
+  pid_t pid;
+  struct timeval ktv;
+  struct itimerval itv;
 )
 
-static void handler(int sig, siginfo_t *si)
+static void handler(int i)
 {
-  TT.rc = si->si_status + ((si->si_code!=CLD_EXITED)<<7);
-  siglongjmp(TT.sj, 1);
+  if (FLAG(v))
+    fprintf(stderr, "timeout pid %d signal %d\n", TT.pid, TT.nextsig);
+
+  toys.exitval = (TT.nextsig==9) ? 137 : 124;
+  kill(TT.pid, TT.nextsig);
+  if (TT.k) {
+    TT.k = 0;
+    TT.nextsig = SIGKILL;
+    xsignal(SIGALRM, handler);
+    TT.itv.it_value = TT.ktv;
+    setitimer(ITIMER_REAL, &TT.itv, (void *)toybuf);
+  }
 }
 
-static long nantomil(struct timespec *ts)
+// timeval inexplicably makes up a new type for microseconds, despite timespec's
+// nanoseconds field (needing to store 1000* the range) using "long". Bravo.
+void xparsetimeval(char *s, struct timeval *tv)
 {
-  return ts->tv_sec*1000+ts->tv_nsec/1000000;
-}
+  long ll;
 
-static void callback(char *argv[])
-{
-  if (!FLAG(foreground)) setpgid(0, 0);
+  tv->tv_sec = xparsetime(s, 6, &ll);
+  tv->tv_usec = ll;
 }
 
 void timeout_main(void)
 {
-  int ii, ms, nextsig = SIGTERM;
-  struct timespec tts, kts;
-
   // Use same ARGFAIL value for any remaining parsing errors
   toys.exitval = 125;
-  xparsetimespec(*toys.optargs, &tts);
-  if (TT.k) xparsetimespec(TT.k, &kts);
-  if (TT.s && -1==(nextsig = sig_to_num(TT.s))) error_exit("bad -s: '%s'",TT.s);
+  xparsetimeval(*toys.optargs, &TT.itv.it_value);
+  if (TT.k) xparsetimeval(TT.k, &TT.ktv);
+
+  TT.nextsig = SIGTERM;
+  if (TT.s && -1 == (TT.nextsig = sig_to_num(TT.s)))
+    error_exit("bad -s: '%s'", TT.s);
+
+  if (!FLAG(foreground)) setpgid(0, 0);
 
   toys.exitval = 0;
-  TT.pfd.events = POLLIN;
-  TT.fds[1] = -1;
-  if (sigsetjmp(TT.sj, 1)) goto done;
-  xsignal_flags(SIGCHLD, handler, SA_NOCLDSTOP|SA_SIGINFO);
+  if (!(TT.pid = XVFORK())) xexec(toys.optargs+1);
+  else {
+    int status;
 
-  TT.pid = xpopen_setup(toys.optargs+1, FLAG(i) ? TT.fds : 0, callback);
-  xsignal(SIGTTIN, SIG_IGN);
-  xsignal(SIGTTOU, SIG_IGN);
-  xsignal(SIGTSTP, SIG_IGN);
-  if (!FLAG(i)) xpipe(TT.fds);
-  TT.pfd.fd = TT.fds[1];
-  ms = nantomil(&tts);
-  for (;;) {
-    if (1 != xpoll(&TT.pfd, 1, ms)) {
-      if (FLAG(v))
-        perror_msg("sending signal %s to command %s", num_to_sig(nextsig),
-          toys.optargs[1]);
-      toys.exitval = (nextsig==9) ? 137 : 124;
-      kill(FLAG(foreground) ? TT.pid : -TT.pid, nextsig);
-      if (!TT.k || nextsig==SIGKILL) break;
-      nextsig = SIGKILL;
-      ms = nantomil(&kts);
+    xsignal(SIGALRM, handler);
+    setitimer(ITIMER_REAL, &TT.itv, (void *)toybuf);
 
-      continue;
-    }
-    if (TT.pfd.revents&POLLIN) {
-      errno = 0;
-      if (1>(ii = read(TT.fds[1], toybuf, sizeof(toybuf)))) {
-        if (errno==EINTR) continue;
-        break;
-      }
-      writeall(1, toybuf, ii);
-    }
-    if (TT.pfd.revents&POLLHUP) break;
+    status = xwaitpid(TT.pid);
+    if (FLAG(preserve_status) || !toys.exitval) toys.exitval = status;
   }
-done:
-  xpclose_both(TT.pid, TT.fds);
-
-  if (FLAG(preserve_status) || !toys.exitval) toys.exitval = TT.rc;
 }
