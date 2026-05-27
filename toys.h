@@ -11,7 +11,9 @@
 // General posix-2008 headers
 #include <ctype.h>
 #include <dirent.h>
+#ifdef TOYBOX_OH_ADAPT
 #include <dlfcn.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
