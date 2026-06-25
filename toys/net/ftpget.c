@@ -81,8 +81,17 @@ static int ftp_line(char *cmd, char *arg, int must)
   }
   if (must>=0) {
     xread2line(TT.fd, toybuf, sizeof(toybuf));
+#ifdef TOYBOX_OH_ADAPT
+    if (!sscanf(toybuf, "%d", &rc)) error_exit_raw(toybuf);
+    if (must && rc != must) {
+      // For data transfer commands, both 125 and 150 are valid
+      if (!(must == 150 && rc == 125))
+        error_exit_raw(toybuf);
+    }
+#else
     if (!sscanf(toybuf, "%d", &rc) || (must && rc != must))
       error_exit_raw(toybuf);
+#endif
   }
 
   return rc;
