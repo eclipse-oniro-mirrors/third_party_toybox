@@ -1889,9 +1889,14 @@
 #undef FOR_logpath
 #endif
 
-// losetup >2S(sizelimit)#s(show)ro#j:fdcaD[!afj] >2S(sizelimit)#s(show)ro#j:fdcaD[!afj]
 #undef OPTSTR_losetup
+#ifdef TOYBOX_OH_ADAPT
+// losetup >2(oh)S(sizelimit)#s(show)ro#j:fdcaD[!afj] >2(oh)S(sizelimit)#s(show)ro#j:fdcaD[!afj]
+#define OPTSTR_losetup ">2(oh)S(sizelimit)#s(show)ro#j:fdcaD[!afj]"
+#else
+// losetup >2S(sizelimit)#s(show)ro#j:fdcaD[!afj] >2(oh)S(sizelimit)#s(show)ro#j:fdcaD[!afj]
 #define OPTSTR_losetup ">2S(sizelimit)#s(show)ro#j:fdcaD[!afj]"
+#endif
 #ifdef CLEANUP_losetup
 #undef CLEANUP_losetup
 #undef FOR_losetup
@@ -1905,6 +1910,9 @@
 #undef FLAG_r
 #undef FLAG_s
 #undef FLAG_S
+#ifdef TOYBOX_OH_ADAPT
+#undef FLAG_oh
+#endif
 #endif
 
 // // ls (sort):(color):;(full-time)(show-control-chars)?(block-size)#=1024<1?(group-directories-first)?ZgoACFHLNRSUXabcdfhikl@mnpqrstuw#=80<0x1[-Cxm1][-Cxml][-Cxmo][-Cxmg][-cu][-ftS][-HL][-Nqb][-k?] (sort):(color):;(full-time)(show-control-chars)?(block-size)#=1024<1?(group-directories-first)?ZgoACFHLNRSUXabcdfhikl@mnpqrstuw#=80<0x1[-Cxm1][-Cxml][-Cxmo][-Cxmg][-cu][-ftS][-HL][-Nqb][-k?]
@@ -5693,6 +5701,9 @@
 #define FLAG_r (1LL<<7)
 #define FLAG_s (1LL<<8)
 #define FLAG_S (1LL<<9)
+#ifdef TOYBOX_OH_ADAPT
+#define FLAG_oh (1LL<<10)
+#endif
 #endif
 
 #ifdef FOR_ls

@@ -157,7 +157,11 @@ USE_LOG(NEWTOY(log, "p:t:", TOYFLAG_USR|TOYFLAG_SBIN))
 USE_LOGGER(NEWTOY(logger, "t:p:s", TOYFLAG_USR|TOYFLAG_BIN))
 USE_LOGIN(NEWTOY(login, ">1f:ph:", TOYFLAG_BIN|TOYFLAG_NEEDROOT))
 USE_LOGNAME(NEWTOY(logname, ">0", TOYFLAG_USR|TOYFLAG_BIN))
+#ifdef TOYBOX_OH_ADAPT
+USE_LOSETUP(NEWTOY(losetup, ">2(oh)S(sizelimit)#s(show)ro#j:fdcaD[!afj]", TOYFLAG_SBIN))
+#else
 USE_LOSETUP(NEWTOY(losetup, ">2S(sizelimit)#s(show)ro#j:fdcaD[!afj]", TOYFLAG_SBIN))
+#endif
 USE_LS(NEWTOY(ls, "(sort):(color):;(full-time)(show-control-chars)\377(block-size)#=1024<1\241(group-directories-first)\376ZgoACFHLNRSUXabcdfhikl@mnpqrstuw#=80<0x1[-Cxm1][-Cxml][-Cxmo][-Cxmg][-cu][-ftS][-HL][-Nqb][-k\377]", TOYFLAG_BIN))
 USE_LSATTR(NEWTOY(lsattr, "vldaR", TOYFLAG_BIN))
 USE_LSMOD(NEWTOY(lsmod, NULL, TOYFLAG_SBIN))
