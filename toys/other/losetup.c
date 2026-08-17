@@ -4,7 +4,11 @@
  *
  * No standard. (Sigh.)
 
+#ifdef TOYBOX_OH_ADAPT
+USE_LOSETUP(NEWTOY(losetup, ">2(oh)S(sizelimit)#s(show)ro#j:fdcaD[!afj]", TOYFLAG_SBIN))
+#else
 USE_LOSETUP(NEWTOY(losetup, ">2S(sizelimit)#s(show)ro#j:fdcaD[!afj]", TOYFLAG_SBIN))
+#endif
 
 config LOSETUP
   bool "losetup"
@@ -30,6 +34,8 @@ config LOSETUP
     -o OFF	Start association at offset OFF into FILE
     -r	Read only
     -S SIZE	Limit SIZE of loopback association (alias --sizelimit)
+
+    --oh  Use /dev/block as the loop device directory (OHOS)
 */
 
 #define FOR_losetup
@@ -164,7 +170,11 @@ void losetup_main(void)
 {
   char **s;
 
+#ifdef TOYBOX_OH_ADAPT
+  TT.dir = (CFG_TOYBOX_ON_ANDROID || FLAG(oh)) ? "/dev/block" : "/dev";
+#else
   TT.dir = CFG_TOYBOX_ON_ANDROID ? "/dev/block" : "/dev";
+#endif
   TT.openflags = FLAG(r) ? O_RDONLY : O_RDWR;
 
   if (TT.j) {
