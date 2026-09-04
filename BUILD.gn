@@ -213,7 +213,7 @@ if (defined(ohos_lite)) {
 
     include_dirs = [ "./" ]
 
-    external_deps = ["zlib:libz"]
+    external_deps = [ "zlib:libz" ]
 
     defines = [
       "_DEFAULT_SOURCE",
@@ -975,7 +975,7 @@ if (defined(ohos_lite)) {
       "TOYBOX_OH_ADAPT",
     ]
 
-    external_deps = ["zlib:libz"]
+    external_deps = [ "zlib:libz" ]
 
     if (build_selinux) {
       sources += [ "toys/other/chcon.c" ]
@@ -1173,6 +1173,15 @@ if (defined(ohos_lite)) {
       if (build_variant == "user") {
         defines += [ "TOYBOX_BUILD_USER" ]
       }
+    }
+
+    if (toybox_extended_cmd) {
+      deps += [
+        "standalone:netstat",
+      ]
+      symlink_target_name -= [
+        "netstat",
+      ]
     }
 
     part_name = "toybox"
