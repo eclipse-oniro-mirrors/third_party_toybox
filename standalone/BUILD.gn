@@ -1,0 +1,172 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
+# Standalone executables extracted from toybox multicall binary.
+# These targets are for standard system only (not ohos_lite).
+
+import("//build/ohos.gni")
+import("//third_party/toybox/toybox.gni")
+
+config("common_build_configs") {
+  defines = [
+    "_DEFAULT_SOURCE",
+    "TOYBOX_OH_ADAPT",
+  ]
+  cflags_c = [
+    "-std=gnu11",
+    "-Wall",
+    "-Wundef",
+    "-Wno-char-subscripts",
+    "-Wno-implicit-function-declaration",
+    "-Wno-unused-variable",
+    "-Wno-unused-value",
+    "-Wno-incompatible-pointer-types",
+    "-Wno-int-conversion",
+    "-Wno-sign-compare",
+    "-Wno-format",
+    "-Wno-unused-result",
+    "-Os",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fno-asynchronous-unwind-tables",
+    "-fPIE",
+    "-funsigned-char",
+    "-Wno-string-plus-int",
+    "-Wno-tautological-constant-compare",
+    "-Wno-string-conversion",
+    "-Wno-unused-but-set-variable",
+  ]
+}
+
+action("copy_common_files") {
+  script = "scripts/script.py"
+  sources = [ "../main.c" ]
+  outputs = [ "${target_gen_dir}/main.c" ]
+  args = [
+    "--input-dir",
+    rebase_path(".."),
+    "--output-dir",
+    rebase_path(target_gen_dir),
+    "--file-copy",
+    "main.c",
+    "--file-copy",
+    "toys.h",
+    "--file-copy",
+    "lib",
+  ]
+}
+
+template("ohos_standalone_toybox_command") {
+  action("${target_name}_copy_private_files") {
+    script = rebase_path("scripts/script.py")
+    sources = [ "../generated" ]
+    outputs = [ "${target_gen_dir}/${invoker.target_name}/generated/config.h" ]
+    args = [
+      "--input-dir",
+      rebase_path(".."),
+      "--output-dir",
+      rebase_path("${target_gen_dir}/${invoker.target_name}"),
+      "--file-copy",
+      "generated",
+    ]
+  }
+
+  action("${target_name}_gen_header") {
+    script = rebase_path("scripts/script.py")
+    sources = [
+      "../generated/config_root.h",
+      "../generated/config_user.h",
+      "../generated/newtoys.h",
+    ]
+    outputs = [
+      "${target_gen_dir}/${invoker.target_name}/generated/newtoys.h",
+      "${target_gen_dir}/${invoker.target_name}/generated/config_user.h",
+      "${target_gen_dir}/${invoker.target_name}/generated/config_root.h",
+    ]
+    args = [
+      "--input-dir",
+      rebase_path("${target_gen_dir}/${invoker.target_name}"),
+      "--output-dir",
+      rebase_path("${target_gen_dir}/${invoker.target_name}"),
+      "--file-newtoys",
+      "generated/newtoys.h",
+      "--name",
+      "USE_${invoker.target_name}",
+      "--file-config",
+      "generated/config_user.h",
+      "--file-config",
+      "generated/config_root.h",
+      "--disable-config",
+      "CFG_TOYBOX",
+      "--disable-config",
+      "CFG_TOYBOX_ZHELP",
+    ]
+    deps = [ ":${invoker.target_name}_copy_private_files" ]
+  }
+
+  ohos_executable(target_name) {
+    forward_variables_from(invoker,
+                           [
+                             "sources",
+                             "cflags",
+                             "cflags_cc",
+                           ])
+    configs = [ ":common_build_configs" ]
+    sources += [ "${target_gen_dir}/main.c" ]
+    sources += [
+      "../lib/args.c",
+      "../lib/commas.c",
+      "../lib/deflate.c",
+      "../lib/dirtree.c",
+      "../lib/elf.c",
+      "../lib/env.c",
+      "../lib/hash.c",
+      "../lib/lib.c",
+      "../lib/llist.c",
+      "../lib/net.c",
+      "../lib/password.c",
+      "../lib/portability.c",
+      "../lib/tty.c",
+      "../lib/utf8.c",
+      "../lib/xwrap.c",
+    ]
+
+    include_dirs = [
+      "${target_gen_dir}/${invoker.target_name}",
+      target_gen_dir,
+    ]
+
+    deps = [
+      ":${target_name}_gen_header",
+      ":copy_common_files",
+    ]
+    if (defined(invoker.deps)) {
+      deps += invoker.deps
+    }
+
+    ldflags = [
+      "-pie",
+      "-Wl,-z,relro",
+      "-Wl,-z,now",
+      "-Wl,-z,noexecstack",
+      "-lm",
+      "-lcrypt",
+    ]
+    if (defined(invoker.ldflags)) {
+      ldflags += invoker.ldflags
+    }
+
+    part_name = "toybox"
+    subsystem_name = "thirdparty"
+    install_images = [
+      "system",
+      "ramdisk",
+      "updater",
+    ]
+    install_enable = true
+  }
+}
+
+if (toybox_extended_cmd) {
+  ohos_standalone_toybox_command("netstat") {
+    sources = [ "../toys/net/netstat.c" ]
+  }
+}
