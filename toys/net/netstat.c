@@ -253,7 +253,11 @@ static int scan_pids(struct dirtree *node)
   DIR *dp;
   int pid, dirfd;
 
+#ifdef TOYBOX_OH_ADAPT
+  if (!node->parent) return DIRTREE_RECURSE|DIRTREE_SHUTUP;
+#else
   if (!node->parent) return DIRTREE_RECURSE;
+#endif
   if (!(pid = atol(node->name))) return 0;
 
   sprintf(toybuf, "/proc/%d/cmdline", pid);
