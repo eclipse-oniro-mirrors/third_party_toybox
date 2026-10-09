@@ -65,13 +65,8 @@ static void format_message(char *msg, int new)
   if ((p = strchr(text = msg+pos, '\n'))) *p = 0;
 
   // Is there a subsystem? (The ": " is just a convention.)
-#ifdef TOYBOX_OH_ADAPT
-  p = NULL;
-  subsystem = 0;
-#else
   p = strstr(text, ": ");
   subsystem = p ? (p-text) : 0;
-#endif
 
   // To get "raw" output for /dev/kmsg we need to add priority to each line
   if (FLAG(r)) {
@@ -102,13 +97,7 @@ static void format_message(char *msg, int new)
     printf("%.*s", subsystem, text);
     text += subsystem;
   }
-
-// 0:DEBUG 1:INFO 2:WARN 3:ERROR 4:PANIC
-#ifdef TOYBOX_OH_ADAPT
-  color(31*((facpri&7)>=3));
-#else
   color(31*((facpri&7)<=3));
-#endif
   xputs(text);
 }
 
