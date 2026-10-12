@@ -68,7 +68,11 @@ static void do_taskset(pid_t pid, int quiet)
 
     // Convert hex strong to mask[] bits
     memset(toybuf, 0, sizeof(toybuf));
-    k = strlen(s = *toys.optargs);
+    j = (k = strlen(s = *toys.optargs))-2*sizeof(toybuf);
+    if (j>0) {
+      s += j;
+      k -= j;
+    }
     s += k;
     for (j = 0; j<k; j++) {
       unsigned long digit = *(--s) - '0';
