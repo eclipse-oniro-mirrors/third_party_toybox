@@ -158,7 +158,6 @@ template("ohos_standalone_toybox_command") {
     subsystem_name = "thirdparty"
     install_images = [
       "system",
-      "ramdisk",
       "updater",
     ]
     install_enable = true
