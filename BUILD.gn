@@ -1179,9 +1179,11 @@ if (defined(ohos_lite)) {
       deps += [
         "standalone:netstat",
       ]
-      symlink_target_name -= [
-        "netstat",
-      ]
+      if (toybox_feature_support_usr_symlink) {
+        symlink_target_name -= [
+          "../usr/bin/netstat",
+        ]
+      }
     }
 
     part_name = "toybox"

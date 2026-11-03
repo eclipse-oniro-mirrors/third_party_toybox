@@ -108,6 +108,7 @@ template("ohos_standalone_toybox_command") {
                              "sources",
                              "cflags",
                              "cflags_cc",
+                             "module_install_dir",
                            ])
     configs = [ ":common_build_configs" ]
     sources += [ "${target_gen_dir}/main.c" ]
@@ -167,5 +168,6 @@ template("ohos_standalone_toybox_command") {
 if (toybox_extended_cmd) {
   ohos_standalone_toybox_command("netstat") {
     sources = [ "../toys/net/netstat.c" ]
+    module_install_dir = "usr/bin"
   }
 }
