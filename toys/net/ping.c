@@ -52,7 +52,12 @@ GLOBALS(
 
   struct sockaddr *sa;
   int sock;
+#ifdef TOYBOX_OH_ADAPT
+  unsigned long sent, recv, dup, fugit, min, max;
+  unsigned char rcvd_tbl[256];  // bitmap: 2048 bits, covers seq 0-2047
+#else
   unsigned long sent, recv, fugit, min, max;
+#endif
 )
 
 // Print a summary. Called as a single handler or at exit.
@@ -60,8 +65,19 @@ static void summary(int sig)
 {
   if (!FLAG(q) && TT.sent && TT.sa) {
     printf("\n--- %s ping statistics ---\n", ntop(TT.sa));
+#ifdef TOYBOX_OH_ADAPT
+    printf("%lu packets transmitted, %lu received", TT.sent, TT.recv);
+    if (TT.dup) printf(", +%lu duplicates", TT.dup);
+    long loss = (long)TT.sent - (long)TT.recv;
+    if (loss < 0) {
+      printf(" -- too many replies!");
+      loss = 0;
+    }
+    printf(", %ld%% packet loss\n", (loss * 100) / ((long)TT.sent ? (long)TT.sent : 1));
+#else
     printf("%lu packets transmitted, %lu received, %ld%% packet loss\n",
       TT.sent, TT.recv, ((TT.sent-TT.recv)*100)/(TT.sent?TT.sent:1));
+#endif
     if (TT.recv)
       printf("round-trip min/avg/max = %lu/%lu/%lu ms\n",
         TT.min, TT.fugit/TT.recv, TT.max);
@@ -308,6 +324,24 @@ void ping_main(void)
     if (waitms<0) waitms = 0;
     if (!(len = xrecvmsgwait(TT.sock, &msg, 0, &srcaddr2, waitms)))
       continue;
+
+    // Dedup: check if this seq was already received
+#ifdef TOYBOX_OH_ADAPT
+    {
+      unsigned short rseq = ih->un.echo.sequence;
+      if (rseq < sizeof(TT.rcvd_tbl) * 8) {
+        if (TT.rcvd_tbl[rseq / 8] & (1 << (rseq % 8))) {
+          TT.dup++;
+          if (!FLAG(q)) {
+            if (FLAG(f)) xputc('\b');
+            else printf(" (DUP!)\n");
+          }
+          continue;
+        }
+        TT.rcvd_tbl[rseq / 8] |= (1 << (rseq % 8));
+      }
+    }
+#endif
 
     TT.recv++;
     TT.fugit += (pkttime = millitime()-*(unsigned *)(ih+1));
