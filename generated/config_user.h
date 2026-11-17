@@ -53,6 +53,8 @@
 #define USE_IPCS(...) __VA_ARGS__
 #define CFG_NETCAT 1
 #define USE_NETCAT(...) __VA_ARGS__
+#define CFG_CHATTR 1
+#define USE_CHATTR(...) __VA_ARGS__
 #else
 #define CFG_DIFF 0
 #define USE_DIFF(...)
@@ -108,6 +110,8 @@
 #define USE_IPCS(...)
 #define CFG_NETCAT 0
 #define USE_NETCAT(...)
+#define CFG_CHATTR 0
+#define USE_CHATTR(...)
 #endif
 #ifdef TOYBOX_ENABLE_BRCTL
 #define CFG_BRCTL 1
@@ -556,8 +560,6 @@
 #define USE_LOSETUP(...)
 #define CFG_LSATTR 1
 #define USE_LSATTR(...) __VA_ARGS__
-#define CFG_CHATTR 0
-#define USE_CHATTR(...)
 #define CFG_LSMOD 1
 #define USE_LSMOD(...) __VA_ARGS__
 #define CFG_LSPCI_TEXT 0

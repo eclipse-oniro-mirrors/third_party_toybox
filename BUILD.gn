@@ -1025,6 +1025,7 @@ if (defined(ohos_lite)) {
           "../usr/bin/basename",
           "../usr/bin/cal",
           "../usr/bin/cat",
+          "../usr/bin/chattr",
           "../usr/bin/chmod",
           "../usr/bin/cksum",
           "../usr/bin/clear",
