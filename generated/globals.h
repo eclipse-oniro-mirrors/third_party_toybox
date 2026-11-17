@@ -119,7 +119,12 @@ struct ping_data {
 
   struct sockaddr *sa;
   int sock;
+#ifdef TOYBOX_OH_ADAPT
+  unsigned long sent, recv, dup, fugit, min, max;
+  unsigned char rcvd_tbl[256];  // bitmap: 2048 bits, covers seq 0-2047
+#else
   unsigned long sent, recv, fugit, min, max;
+#endif
 };
 
 struct sntp_data {
