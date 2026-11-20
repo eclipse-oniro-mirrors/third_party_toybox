@@ -45,7 +45,13 @@ void uname_main(void)
   uname((void *)toybuf);
   if (!toys.optflags) toys.optflags = FLAG_s;
   for (i=0; i<6; i++) if (toys.optflags & ((1<<i)|FLAG_a)) {
-    if (i==5) c = " OpenHarmony"+!needspace;
+    if (i==5) {
+#ifdef TOYBOX_OH_ADAPT
+      c = " OpenHarmony"+!needspace;
+#else
+      c = " Toybox"+!needspace;
+#endif
+    }
     else {
       c = toybuf+sizeof(((struct utsname *)0)->sysname)*i;
       if (needspace++) *(--c)=' '; // Can't decrement first entry
